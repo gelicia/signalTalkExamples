@@ -12,12 +12,14 @@ std::vector<String> scanned;   // The raw list of SSIDs from this scan (includes
 
 #include "sd-card-library/sd-card-library.h"
 
+#include "neopixel/neopixel.h"
+
 #define mySerial Serial1
 Adafruit_GPS GPS(&mySerial);
 
 // Set GPSECHO to 'false' to turn off echoing the GPS data to the Serial console
 // Set to 'true' if you want to debug and listen to the raw GPS sentences. 
-#define GPSECHO  false
+#define GPSECHO  true
 
 // this keeps track of whether we're using the interrupt
 // off by default!
@@ -40,12 +42,22 @@ bool start_scan = true;
 
 String gpsLongG = "0";
 String gpsLatG = "0";
+uint8_t gpsFixG = 0;
+
+#define PIXEL_PIN D5
+#define PIXEL_COUNT 1
+#define PIXEL_TYPE WS2812
+Adafruit_NeoPixel pixel = Adafruit_NeoPixel(PIXEL_COUNT, PIXEL_PIN, PIXEL_TYPE);
 
 void setup() {
     GPS.begin(9600);
     Serial.begin(9600);
     
     mySerial.begin(9600);
+    
+    pixel.begin();
+    pixel.setPixelColor(0, pixel.Color(255,0,0));
+    pixel.show(); 
     
     //while (!Serial.available());
     Serial.print("Initializing SD card...");
@@ -95,9 +107,15 @@ void scan() {
     if (!scanning && start_scan){
         scanning = true;
         start_scan = false;
+        
+        //set LED to green to show scan has started
+        pixel.setPixelColor(0, pixel.Color(0,255,0));
+        pixel.show();
+        
         scanned.clear();
         Serial.println("");
         scanner.startScan();
+        
         getLocation();
     }
     else {
@@ -108,14 +126,28 @@ void scan() {
             
             if (scanning && name.length() && is_scanned_with_push(name)) {
                 // already seen this name, so stop scanning
+                
+                //set to red when scan is done
+                pixel.setPixelColor(0, pixel.Color(255,0,0));
+                pixel.show();
+                
                 scanning = false;
             }
             else {
-                 if (name != ""){
+                 if (name != "" && gpsFixG > 0){
                     Serial.println(ssid(result) + "," + result.security + "," + result.rssi);
                     myFile = SD.open("data.txt", FILE_WRITE);
+                    
+                    //turn LED to blue
+                    pixel.setPixelColor(0, pixel.Color(0,0,255));
+                    pixel.show();
+                    
                     myFile.println(gpsLatG + "," + gpsLongG + "," + ssid(result) + "," + result.security + "," + result.rssi);
                     myFile.close();
+                    
+                    //set back to green
+                    pixel.setPixelColor(0, pixel.Color(0,255,0));
+                    pixel.show();
                 }
             }
         }
@@ -189,6 +221,7 @@ void getLocation(){
       
       String gpsLat = String(convertDegMinToDecDeg(GPS.latitude, GPS.lat));
       String gpsLong = String(convertDegMinToDecDeg(GPS.longitude,  GPS.lon));
+      uint8_t gpsFix = GPS.fixquality;
       
       Serial.print(gpsLat);
        Serial.print(", "); 
@@ -196,6 +229,7 @@ void getLocation(){
        
        gpsLatG = gpsLat;
        gpsLongG = gpsLong;
+       gpsFixG = gpsFix;
       
       
 }
