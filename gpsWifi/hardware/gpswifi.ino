@@ -123,10 +123,17 @@ void loop() {
     Serial.print(gpsLat);
     Serial.print(", "); 
     Serial.println(gpsLong);
-       
-    gpsLatG = gpsLat;
-    gpsLongG = gpsLong;
-    gpsFixG = gpsFix;
+      
+     if (gpsFix > 0) {
+        gpsLatG = gpsLat;
+        gpsLongG = gpsLong;
+        gpsFixG = gpsFix;
+     }
+     else {
+        gpsLatG = 0;
+        gpsLongG = 0;
+        gpsFixG = 0;
+     }
   }
   
   static int lastScan = 0;    
