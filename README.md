@@ -5,4 +5,4 @@ These are a set of examples for a presentation at Signal 2015 involving open har
 ## Projects
 
 * WiFi finder (`gpsWifi`): Records where wifi signals are.
-* Luggage tag (`luggage`): Measures things in your (checked) luggage.
+* Luggage tag: Move to https://github.com/zzolo/luggage-tag
